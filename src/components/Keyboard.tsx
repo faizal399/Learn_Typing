@@ -6,9 +6,9 @@ interface KeyboardProps {
   setText: React.Dispatch<React.SetStateAction<string>>;
 }
 
-
 const Keyboard = ({ setText }: KeyboardProps) => {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  // const audioRef = useRef<HTMLAudioElement[]>([]);
+  const audioPool = useRef<HTMLAudioElement[]>([]);
   const {
     capsLock,
     setCapsLock,
@@ -50,21 +50,34 @@ const Keyboard = ({ setText }: KeyboardProps) => {
   };
 
   useEffect(() => {
+    audioPool.current = Array.from(
+      { length: 10 },
+      () => {
+        const audio = new Audio(
+          "/sound/soul_serenity_sounds-typing-sound-02-229861.mp3",
+        );
+        audio.volume = 0.2;
+        return audio;
+      },
+      [],
+    );
 
-    audioRef.current = new Audio(
-            "/sound/soul_serenity_sounds-typing-sound-02-229861.mp3",
-          );
+    const playTypingSound = () => {
+      const availableAudio = audioPool.current.find((audio) => audio.paused);
+
+      if (availableAudio) {
+        availableAudio.currentTime = 0;
+
+        availableAudio.play();
+      }
+    };
 
     const handlePhysicalClick = (e: KeyboardEvent) => {
       e.preventDefault();
       setActiveKey(normalizeKey(e.key));
       console.log(e.key);
 
-        if (audioRef.current) {
-        // audioRef.current.pause();
-        // audioRef.current.currentTime = 0;
-        audioRef.current.play();
-      }
+     
 
       switch (e.key) {
         case "Backspace":
@@ -77,7 +90,7 @@ const Keyboard = ({ setText }: KeyboardProps) => {
           setCapsLock((prev) => !prev);
           break;
         case "Shift":
-          setShift((prev) => !prev);
+          setShift(true);
           break;
         case "Tab":
           setText((prev: string) => prev + "\t");
@@ -95,8 +108,10 @@ const Keyboard = ({ setText }: KeyboardProps) => {
           } else {
             output = e.key.toLowerCase();
           }
-          
-          audioRef.current?.play()
+
+          // audioRef.current?.play();
+    playTypingSound();
+
           setText((prev: string) => prev + output);
           break;
         }
@@ -116,7 +131,7 @@ const Keyboard = ({ setText }: KeyboardProps) => {
       window.removeEventListener("keydown", handlePhysicalClick);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [setText, capsLock, setShift, shift]);
+  }, [setText, capsLock, setShift, shift,setActiveKey,setCapsLock]);
 
   return (
     <div
